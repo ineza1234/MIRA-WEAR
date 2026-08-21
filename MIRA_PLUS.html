@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="rw">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MIRA PLUS</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#f7f3f8;color:#231f20}
+header{background:#8e3d78;color:#fff;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:5}
+.brand{font-size:24px;font-weight:800}.wrap{max-width:1000px;margin:auto;padding:18px}
+.card{background:#fff;border-radius:18px;padding:20px;box-shadow:0 5px 20px #0001;margin-bottom:16px}
+button{border:0;border-radius:10px;padding:12px 15px;background:#8e3d78;color:#fff;font-weight:700;margin:4px;cursor:pointer}
+button.alt{background:#eee;color:#333}.tabs{display:flex;gap:7px;overflow:auto;padding:8px 0;margin-bottom:15px}.tabs button{white-space:nowrap}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat{background:#f3e8f1;padding:16px;border-radius:14px}.stat b{font-size:20px;display:block;margin-top:7px}
+.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:13px}.product{border:1px solid #eee;border-radius:14px;padding:15px}.emoji{font-size:42px}
+input,select{width:100%;padding:12px;border:1px solid #ddd;border-radius:9px;margin:6px 0}
+.hidden{display:none!important}.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1;min-width:130px}
+.notice{padding:14px;background:#fff5d9;border-radius:12px}.danger{background:#9b2c2c}.success{background:#258a4a}
+table{width:100%;border-collapse:collapse}td,th{padding:10px;border-bottom:1px solid #eee;text-align:left}
+@media(max-width:700px){
+  .grid{grid-template-columns:repeat(2,1fr)}
+  .tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;overflow:visible}
+  .tabs button{width:100%;margin:0;min-width:0;font-size:14px;padding:12px 8px}
+  .wrap{padding:12px}
+  header{padding:14px 16px}
+  .brand{font-size:22px}
+}
+</style>
+</head>
+<body>
+<header><div class="brand">MIRA PLUS</div><button onclick="logout()">Logout</button></header>
+<div class="wrap">
+
+<section id="login" class="card hidden">
+<h2>Login</h2><input id="lem" type="email" placeholder="Email"><input id="lpw" type="password" placeholder="Password"><button onclick="login()">Login</button>
+</section>
+
+<section id="app">
+<div class="card"><h2>Murakaza neza, <span id="uname"></span> 👋</h2>
+<div class="grid">
+<div class="stat">Balance<b id="bal">2,000 RWF</b></div>
+<div class="stat">Welcome Bonus<b>2,000 RWF</b></div>
+<div class="stat">Referrals<b id="refs">0</b></div>
+<div class="stat">Commission<b id="comm">0 RWF</b></div>
+</div></div>
+
+<div class="tabs">
+<button onclick="show('home')">🏠 Ahabanza</button>
+<button onclick="show('products')">🛍️ Products</button>
+<button onclick="show('wallet')">💰 Wallet</button>
+<button onclick="show('referral')">👥 Referral</button>
+<button onclick="show('admin')">⚙️ Admin Panel</button>
+</div>
+
+<section id="home" class="card page"><h2>Dashboard</h2><div class="notice">Account yawe irakora. Welcome Bonus ya 2,000 RWF iri kuri balance.</div></section>
+
+<section id="products" class="card page hidden"><h2>Products</h2><div id="plist" class="products"></div></section>
+
+<section id="wallet" class="card page hidden"><h2>Wallet</h2>
+<p>Balance: <b id="wbal"></b></p>
+<div class="row"><button onclick="deposit()">⬆️ Kubitsa</button><button onclick="withdraw()">⬇️ Kubikuza</button></div>
+<div class="notice">Kubitsa no kubikuza nyabyo bisaba payment service/backend. Iyi version ibika ibikorwa muri browser gusa.</div>
+</section>
+
+<section id="referral" class="card page hidden"><h2>Referral</h2>
+<p>Abantu watumye: <b id="r2">0</b></p><p>Commission: <b id="c2">0 RWF</b></p>
+<input id="rLink" readonly><button onclick="copyRef()">Copy referral link</button>
+</section>
+
+<section id="admin" class="card page hidden"><h2>Admin Panel</h2>
+<div class="notice">Admin panel ya demo. Mu production tuzayihuza na Supabase kugira ngo data ibe online kandi admin abe ari we wenyine ubona iyi page.</div>
+<div class="row">
+<button onclick="addProduct()">➕ Add Product</button><button onclick="showUsers()">👤 Users</button><button onclick="showOrders()">📦 Orders</button>
+</div><div id="adminData"></div></section>
+</section>
+</div>
+
+<script>
+const products=[
+{id:1,n:"Premium Dress",p:45000,e:"👗"},
+{id:2,n:"Classic Shirt",p:28000,e:"👔"},
+{id:3,n:"MIRA Bag",p:38000,e:"👜"},
+{id:4,n:"Accessories",p:12000,e:"💎"},
+{id:5,n:"VIP Package 1",p:5000,e:"👑"},
+{id:6,n:"VIP Package 2",p:10000,e:"⭐"}];
+let user=JSON.parse(localStorage.getItem("uh_user")||'null');
+if(!user){user={name:"Marie Therese",email:"",balance:2000,refs:0,comm:0};localStorage.setItem("uh_user",JSON.stringify(user))}
+function money(x){return Number(x).toLocaleString()+" RWF"}
+function save(){localStorage.setItem("uh_user",JSON.stringify(user))}
+function render(){
+ document.getElementById("uname").textContent=user.name;document.getElementById("bal").textContent=money(user.balance);
+ document.getElementById("wbal").textContent=money(user.balance);document.getElementById("refs").textContent=user.refs;
+ document.getElementById("r2").textContent=user.refs;document.getElementById("comm").textContent=money(user.comm);document.getElementById("c2").textContent=money(user.comm);
+ document.getElementById("rLink").value=location.href.split("?")[0]+"?ref="+btoa(user.email||user.name);
+ document.getElementById("plist").innerHTML=products.map(x=>`<div class="product"><div class="emoji">${x.e}</div><h3>${x.n}</h3><b>${money(x.p)}</b><br><button onclick="order('${x.n}')">Order</button></div>`).join("");
+}
+function show(id){document.querySelectorAll(".page").forEach(x=>x.classList.add("hidden"));document.getElementById(id).classList.remove("hidden")}
+function order(n){alert("Order ya "+n+" yakiriwe.")}
+function deposit(){let x=Number(prompt("Amafaranga ushaka kubitsa (RWF):"));if(x>0){user.balance+=x;save();render();alert("Kubitsa byanditswe kuri demo.");}}
+function withdraw(){let x=Number(prompt("Amafaranga ushaka kubikuza (RWF):"));if(x>0&&x<=user.balance){user.balance-=x;save();render();alert("Kubikuza byanditswe kuri demo.");}else alert("Balance ntihagije.");}
+function copyRef(){navigator.clipboard?.writeText(document.getElementById("rLink").value);alert("Referral link copied.");}
+function addProduct(){let n=prompt("Izina rya product:"),p=Number(prompt("Igiciro RWF:"));if(n&&p>0){products.push({id:products.length+1,n,p,e:"🛍️"});render();show("products");}}
+function showUsers(){document.getElementById("adminData").innerHTML="<h3>Users</h3><table><tr><th>Name</th><th>Email</th></tr><tr><td>"+user.name+"</td><td>"+(user.email||"Ntabwo yashyizweho")+"</td></tr></table>"}
+function showOrders(){document.getElementById("adminData").innerHTML="<h3>Orders</h3><p>Nta orders ziriho kuri demo.</p>"}
+function login(){alert("Login ya online tuzayihuza na Supabase.");}
+function logout(){localStorage.removeItem("uh_user");location.reload()}
+render();
+</script>
+</body></html>
